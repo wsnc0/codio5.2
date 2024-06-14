@@ -17,9 +17,9 @@
 <table class="table table-striped col-md-12" id="movies">
   <thead>
     <tr>
-      <th>Movie Title</th>
+      <th><%= link_to 'Movie Title', movies_path(sort_by: 'title'), id: 'title_header', class: 'hilite btn btn-warning' %></th>
       <th>Rating</th>
-      <th>Release Date</th>
+      <th><%= link_to 'Release Date', movies_path(sort_by: 'release_date'), id: 'release_date_header', class: 'hilite btn btn-warning' %></th>
       <th>More Info</th>
     </tr>
   </thead>

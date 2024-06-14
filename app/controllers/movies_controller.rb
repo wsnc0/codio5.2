@@ -63,6 +63,14 @@ class MoviesController < ApplicationController
       selected_ratings = @ratings_to_show_hash.keys
       @movies = @movies.where(rating: selected_ratings)
     end
+
+    sort_column = params[:sort_by]
+    if sort_column.present?
+      @movies = @movies.order(sort_column)
+    end
+
+    # Highlight the selected sorting column header
+    @hilite_column = sort_column
   end
 
   def new
