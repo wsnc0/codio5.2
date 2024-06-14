@@ -2,44 +2,44 @@
 # https://hub.docker.com/_/ruby
 FROM ruby:2.6.6 AS rails-toolbox
 
-RUN (curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | gpg --dearmor | apt-key add -) && \
-    echo "deb https://deb.nodesource.com/node_14.x buster main"      > /etc/apt/sources.list.d/nodesource.list && \
-    apt-get update && apt-get install -y nodejs lsb-release
-
-RUN (curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -) && \
+# Install system dependencies
+RUN apt-get update -qq && \
+    apt-get install -y curl gnupg2 && \
+    curl -sS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo "deb https://deb.nodesource.com/node_14.x buster main" > /etc/apt/sources.list.d/nodesource.list && \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
-    apt-get update && apt-get install -y yarn
+    apt-get update && \
+    apt-get install -y nodejs yarn libpq-dev python3-distutils
 
-# Install production dependencies.
+# Set up the application directory
 WORKDIR /app
 
+# Install bundler and production dependencies
 COPY Gemfile Gemfile.lock ./
-
-RUN apt-get update && apt-get install -y libpq-dev && apt-get install -y python3-distutils
-RUN gem install bundler -v 2.4.22 && \
-    bundle config set --local deployment 'true' && \
+RUN gem install bundler -v 2.4.22
+RUN bundle config set --local deployment 'true' && \
     bundle config set --local without 'development test' && \
     bundle install
 
-# Copy local code to the container image.
-COPY . /app
+# Copy the application code to the container image
+COPY . .
 
+# Set environment variables
 ENV RAILS_ENV=production
 ENV RAILS_SERVE_STATIC_FILES=true
-# Redirect Rails log to STDOUT for Cloud Run to capture
 ENV RAILS_LOG_TO_STDOUT=true
-ENV SECRET_KEY_BASE=<YOUR SECRET_KEY_BASE>
+ENV SECRET_KEY_BASE=<YOUR_SECRET_KEY_BASE>
 
-# pre-compile Rails assets with master key
+# Precompile assets and run database migrations
 RUN bundle exec rake assets:precompile
-
-
-ENV RAILS_ENV=production
-
 RUN bundle exec rake db:create
 RUN bundle exec rake db:migrate
 RUN bundle exec rake db:seed
 
+# Expose port 8080
 EXPOSE 8080
+
+# Start Rails server
 CMD ["bin/rails", "server", "-b", "0.0.0.0", "-p", "8080"]
 
