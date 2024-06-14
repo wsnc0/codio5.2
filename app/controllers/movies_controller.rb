@@ -57,14 +57,19 @@ class MoviesController < ApplicationController
   def index
     @movies = Movie.all
     @all_ratings = Movie.all_ratings
-    @ratings_to_show_hash = params[:ratings] || {}
 
-    if @ratings_to_show_hash.any?
-      selected_ratings = @ratings_to_show_hash.keys
+    # Retrieve and update session settings for ratings and sort_by
+    session[:ratings_to_show] = params[:ratings] || session[:ratings_to_show] || {}
+    session[:sort_by] = params[:sort_by] || session[:sort_by]
+
+    # Apply filters based on session settings
+    if session[:ratings_to_show].any?
+      selected_ratings = session[:ratings_to_show].keys
       @movies = @movies.where(rating: selected_ratings)
     end
 
-    sort_column = params[:sort_by]
+    # Apply sorting based on session settings
+    sort_column = session[:sort_by]
     if sort_column.present?
       @movies = @movies.order(sort_column)
     end
